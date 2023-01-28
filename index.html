@@ -1,8 +1,9 @@
 
 <html>
 
-<meta http-equiv="Refresh" content="0; url='https://houndstownusa.com/locations/cincinnati-madisonville/'" />
+<meta http-equiv="Refresh" content="5; url='https://houndstownusa.com/locations/cincinnati-madisonville/'" />
 
+<script>
 fetch("https://ipapi.co/json/")
     .then(response=>response.json())
     .then((responseJson=>{
@@ -12,6 +13,7 @@ fetch("https://ipapi.co/json/")
         console.log("Lat: "+ responseJson.latitude)
         console.log("Long: "+ responseJson.longitude)
     }))
+</script>
 	
 	
 </html>
