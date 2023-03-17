@@ -59,24 +59,64 @@ http.createServer(function (req, res) {
   var q = url.parse(req.url, true);
   var filename = "." + q.pathname;
   console.log(filename);
-  fs.readFile(filename, function(err, data) {
+  if(filename==="./userinfo"){
 
-    if (err) {
-      
-      connectToDatabase();
-      console.log('connecting to database');
-      res.writeHead(200, {'Content-Type': 'text/html'});
-      res.writeHead(301, { Location: "https://houndstownusa.com/locations/cincinnati-madisonville/" });
-      //res.write(data);
-      
-    } else{
-      console.log('throw error');
-      res.writeHead(404, {'Content-Type': 'text/html'});
-    }
-    
-    return res.end();
+		var dbUrl = "mongodb://localhost:27017/";
 
-  });
+		MongoClient.connect(dbUrl, function(err, db) {
+		  if (err) throw err;
+		  var dbo = db.db("houndtownmarketing");
+		  var query = { City: "Cincinnati" };
+		  		dbo.collection("trackinguser").find(query).toArray(function(err, result) {
+			    if (err) throw err;
+			    //document.getElementById("demo").innerHTML = result;
+			    console.log(result);
+			    db.close();
+			  });
+	  });
+
+			MongoClient.connect(dbUrl, function(err, db) {
+			  if (err) throw err;
+			  var dbo = db.db("houndtownmarketing");
+			  var query = { City: "Cincinnati" };
+			  dbo.collection("trackinguser").find(query).toArray(function(err, result) {
+			    if (err) throw err;
+			    //document.getElementById("demo").innerHTML = result;
+			    console.log(result);
+			    res.writeHead(200, { 'Content-Type': 'application/json' });
+					res.write(JSON.stringify(result));
+
+			    db.close();
+			    return res.end();
+			  });
+			});
+
+  	// fs.readFile('demofile1.html', function(err, data) {
+		 //    res.writeHead(200, {'Content-Type': 'text/html'});
+		 //    res.write(data);
+		 //    return res.end();
+  	// });
+
+  }else{
+	  	fs.readFile(filename, function(err, data) {
+
+	    if (err) {
+	      
+	      connectToDatabase();
+	      console.log('connecting to database');
+	      res.writeHead(200, {'Content-Type': 'text/html'});
+	      res.writeHead(301, { Location: "https://houndstownusa.com/locations/cincinnati-madisonville/" });
+	      //res.write(data);
+	      
+	    } else{
+	      console.log('throw error');
+	      res.writeHead(404, {'Content-Type': 'text/html'});
+	    }
+	    
+	    return res.end();
+
+	  });
+  }
+  
 
 }).listen(8080);
-
