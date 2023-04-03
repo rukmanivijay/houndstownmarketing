@@ -4,10 +4,13 @@ var fs = require('fs');
 var mongoose = require('mongoose');
 var MongoClient = require('mongodb').MongoClient;
 
-function connectToDatabase() {
+var mongoDB = 'mongodb://127.0.0.1:27017/houndtownmarketing';
+var dbUrl = "mongodb://127.0.0.1:27017/";
 
-	var mongoDB = 'mongodb://localhost:27017/houndtownmarketing';
-	var url = "mongodb://localhost:27017/";
+function connectToDatabase(ip) {
+	
+	var ipValue = ip;
+
 	mongoose.connect(mongoDB);
 
 	mongoose.Promise = global.Promise;
@@ -22,15 +25,22 @@ function connectToDatabase() {
 		console.log('Mongoose default connection failed' +err);
 	});
 
-	MongoClient.connect(url, function(err, db) {
+	MongoClient.connect(dbUrl, function(err, db) {
 	  if (err) throw err;
 	  var dbo = db.db("houndtownmarketing");
 
 	  var myobj;
-	  var ip,city,lat,longi;
+	  var ip,city,lat,longi,date_time;
+	  
+	  var url = "https://ipapi.co/"+ipValue+"/json";
+ 
+	  var newDate = new Date();
+	  var offset = -300;
+	  var dateString = new Date(newDate.getTime() + offset*60*1000).toUTCString();
+	  
 
 	 // fetch is an API
-	fetch("https://ipapi.co/json/")
+	fetch(url)
 	    .then(response=>response.json())
 	    .then((responseJson=>{
 
@@ -38,7 +48,8 @@ function connectToDatabase() {
 			city = responseJson.city;
 			lat = responseJson.latitude;
 			longi = responseJson.longitude;
-			myobj = { IP: ip, City: city, Latitude: lat, Longitude: longi};
+			date_time = dateString;
+			myobj = { IP: ip, City: city, Latitude: lat, Longitude: longi, Date_Time: date_time };
 
 
 			//connnecting to the database
@@ -56,6 +67,14 @@ function connectToDatabase() {
 
 http.createServer(function (req, res) {
 
+  //var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || null;
+  var ip = req.connection.remoteAddress;
+  //var ip ="::ffff:124.89.86.225";
+  //console.log( ip );
+  var startPosition = ip.lastIndexOf(":")+1;
+  ip = ip.slice(startPosition);
+  //console.log(ip);
+
   var q = url.parse(req.url, true);
   var filename = "." + q.pathname;
   console.log(filename);
@@ -63,7 +82,6 @@ http.createServer(function (req, res) {
   if(filename==="./userinfo"){
 
   	console.log("userinfo");
-		var dbUrl = "mongodb://localhost:27017/";
 
 			MongoClient.connect(dbUrl, function(err, db) {
 
@@ -71,7 +89,7 @@ http.createServer(function (req, res) {
 			  
 			  var dbo = db.db("houndtownmarketing");
 			  var query = { City: "Cincinnati" };
-			  dbo.collection("trackinguser").find(query).toArray(function(err, result) {
+			  dbo.collection("trackinguser").find({}).toArray(function(err, result) {
 			    if (err) throw err;
 			    
 			    res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -86,7 +104,7 @@ http.createServer(function (req, res) {
 	  	
 	  	fs.readFile(filename, function(err, data) {
 
-	      connectToDatabase();
+	      connectToDatabase(ip);
 	      console.log('connecting to database');
 	      res.writeHead(200, {'Content-Type': 'text/html'});
 	      res.writeHead(301, { Location: "https://houndstownusa.com/locations/cincinnati-madisonville/" });
